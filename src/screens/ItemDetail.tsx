@@ -79,14 +79,31 @@ export const ItemDetail: React.FC = () => {
       // 1. Delete photos from storage first
       if (orchid.photo_urls && orchid.photo_urls.length > 0) {
         const paths = orchid.photo_urls.map(url => {
-          // Extract path from Supabase URL
-          // URL format: .../storage/v1/object/public/orchid_photos/event/UUID/orchids/UUID/file.jpg
-          const parts = url.split('/orchid_photos/');
-          return parts.length > 1 ? parts[1] : null;
+          try {
+            // Robust path extraction: find the bucket name in the URL and take everything after it
+            const bucketName = 'orchid_photos';
+            const searchStr = `/${bucketName}/`;
+            const index = url.indexOf(searchStr);
+            if (index !== -1) {
+              const path = url.substring(index + searchStr.length);
+              // Remove query parameters if any (though getPublicUrl usually doesn't have them)
+              return decodeURIComponent(path.split('?')[0]);
+            }
+            return null;
+          } catch (e) {
+            return null;
+          }
         }).filter(p => p !== null) as string[];
 
         if (paths.length > 0) {
-          await supabase.storage.from('orchid_photos').remove(paths);
+          const { error: storageError } = await supabase.storage
+            .from('orchid_photos')
+            .remove(paths);
+          
+          if (storageError) {
+            console.error('Error removing from storage:', storageError);
+            alert('Erro ao apagar fotos do servidor: ' + storageError.message);
+          }
         }
       }
 
