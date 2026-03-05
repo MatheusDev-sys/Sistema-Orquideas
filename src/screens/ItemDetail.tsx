@@ -76,6 +76,21 @@ export const ItemDetail: React.FC = () => {
     setActionLoading(true);
 
     try {
+      // 1. Delete photos from storage first
+      if (orchid.photo_urls && orchid.photo_urls.length > 0) {
+        const paths = orchid.photo_urls.map(url => {
+          // Extract path from Supabase URL
+          // URL format: .../storage/v1/object/public/orchid_photos/event/UUID/orchids/UUID/file.jpg
+          const parts = url.split('/orchid_photos/');
+          return parts.length > 1 ? parts[1] : null;
+        }).filter(p => p !== null) as string[];
+
+        if (paths.length > 0) {
+          await supabase.storage.from('orchid_photos').remove(paths);
+        }
+      }
+
+      // 2. Delete from database
       const { error } = await supabase
         .from('orchids')
         .delete()
