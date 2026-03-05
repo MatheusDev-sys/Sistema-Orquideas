@@ -1,0 +1,5 @@
+{
+  "name": "MathFlower",
+  "description": "Aplicativo mobile-first para controle rápido de orquídeas para floriculturas.",
+  "requestFramePermissions": ["camera"]
+}
